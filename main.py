@@ -12,7 +12,7 @@ from nltk.stem import PorterStemmer
 from nltk.corpus import stopwords
 stop_words = set(stopwords.words('english'))
 nltk.download('punkt')
-
+from wordcloud import WordCloud, STOPWORDS
 
 ## upload data
 clean_tweets_df = pd.read_excel("JWC_raw_data.xlsx")
@@ -41,7 +41,7 @@ plt.xticks(rotation='vertical')
 plt.title('Users Who Tweeted the Most')
 # tweak spacing to prevent clipping of tick-labels
 plt.subplots_adjust(bottom=0.55)
-
+plt.show()
 
 # create df of text data
 text_df = clean_tweets_df.drop(['Datetime', 'Tweet Id', 'Username', 'User Location',
@@ -64,7 +64,7 @@ def polarity(filtered_text):
     return TextBlob(filtered_text).sentiment.polarity
 
 text_df['polarity'] = clean_tweets_df['Clean Tweet'].apply(polarity)
-print(text_df['polarity'].head())
+print(text_df['polarity'].tail())
 
 def sentiment(label):
     if label <0:
@@ -75,4 +75,31 @@ def sentiment(label):
         return "Positive"
     
 text_df['sentiment'] = text_df['polarity'].apply(sentiment)
-print(text_df.head())
+print(text_df.tail())
+
+sns.countplot(x='sentiment', data = text_df)
+plt.show()
+
+# create piechart
+
+colors = ("yellowgreen", "gold", "red")
+wp = {'linewidth':2, 'edgecolor':"black"}
+tags = text_df['sentiment'].value_counts()
+explode = (0.1,0.1,0.1)
+tags.plot(kind='pie', shadow=True, explode = explode, label='')
+plt.title('Distribution of sentiments')
+
+# top 5 tweets - Positive
+
+pos_tweets = text_df[text_df.sentiment == 'Positive']
+pos_tweets = pos_tweets.sort_values(['polarity'], ascending= False)
+pos_tweets.head()
+
+# create word cloud to show positive tweets
+
+text = " ".join([word for word in pos_tweets['Clean Tweet']])
+wordcloud = WordCloud(max_words=500, width=1600, height=800).generate(text)
+plt.imshow(wordcloud, interpolation='bilinear')
+plt.axis("off")
+plt.title('Most frequent words in positive tweets', fontsize=19)
+plt.show()
